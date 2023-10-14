@@ -31,7 +31,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(cors({ origin: 'http://localhost:5500' }));
+app.use(cors({ origin: 'https://smartcodeacademy.netlify.app' }));
 app.use(express.json());
 
 // Serve static files from the "client" directory

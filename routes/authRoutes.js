@@ -79,7 +79,7 @@ router.post('/register', async (req, res) => {
     await pool.query(query);
 
     // Redirect the user to the email verification page with the email as a query parameter
-    res.redirect(`http://localhost:5500/client/email-verification.html?email=${email}`);
+    res.redirect(`https://smartcodeacademy.netlify.app/email-verification.html?email=${email}`);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An error occurred during registration.' });

@@ -39,7 +39,7 @@ async function sendUserIdEmailAndNotifyAdmin(email, userId, firstName, lastName)
       to: email,
       subject: 'Your User ID',
       html: `
-        <p>Hello ${firstName} ${lastName}!</p>
+        <p>Hello!</p>
         <p>Thank you for verifying your email and joining Smart Tech Hub Inc. Your User ID is: ${userId}</p>
         <p>You can use this User ID to log in to your account.</p>
         <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>

@@ -405,6 +405,68 @@ const transporter = nodemailer.createTransport({
 
 
 
+  router.put('/submit-lecture-result-python', async (req, res) => {
+    try {
+      const { pythonCode, lectureName } = req.body;  // Modify to accept pythonCode and lectureName
+  
+      // Extract user ID from the authorization token
+      const token = req.headers.authorization.split('Bearer ')[1];
+      const decodedToken = jwt.verify(token, 'your-secret-key'); // Replace 'your-secret-key' with your actual secret key
+
+      if (!decodedToken || !decodedToken.user_id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const userId = decodedToken.user_id;
+  
+      // Create a transporter object using your email service credentials
+      const transporter = nodemailer.createTransport({
+        service: 'gmail', // e.g., 'Gmail', 'Outlook', etc.
+        auth: {
+          user: 'smarttechhubinc@gmail.com',
+          pass: 'ryiqzfanjljtzyam', // Replace with your email password
+        },
+      });
+  
+      const mailOptions = {
+        from: 'smarttechhubinc@gmail.com',
+        to: 'smarttechhubinc@gmail.com',
+        subject: 'Python Lecture Result Submission',
+        text: `Python Code:\n${pythonCode}`, // Modify to include Python code
+      };
+  
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email:', error);
+          res.status(500).json({ error: 'Internal server error' });
+        } else {
+          console.log('Email sent:', info.response);
+        }
+      });
+  
+      
+            // Update the lecture completion status in the database if needed
+            const updateResult = await updateLectureCompletion(lectureName, userId);
+
+            if (updateResult.success) {
+              // Lecture completion status updated successfully
+              console.log('Lecture completion status updated successfully');
+            } else {
+              // Handle errors if update fails
+              console.error('Failed to update lecture completion status');
+            }
+  
+      // Return an appropriate response based on success or failure
+      res.status(200).json({ message: 'Lecture result submitted successfully' });
+    } catch (error) {
+      console.error('Error submitting lecture result:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+
+
+
 router.get('/upcoming-assignments', async (req, res) => {
   try {
     // Check if there's a token in the request headers

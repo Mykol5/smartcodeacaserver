@@ -631,6 +631,68 @@ router.put('/submit-assignment-result', async (req, res) => {
 
 
 
+// Server-side route to handle Python assignment result submission
+router.put('/submit-python-assignment-result', async (req, res) => {
+  try {
+    const { pythonCode, assignmentName } = req.body; // Extract assignmentName and userId from the request body
+
+    // Extract user ID from the authorization token
+    const token = req.headers.authorization.split('Bearer ')[1];
+    const decodedToken = jwt.verify(token, 'your-secret-key'); // Replace 'your-secret-key' with your actual secret key
+
+    if (!decodedToken || !decodedToken.user_id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = decodedToken.user_id;
+
+    // Create a transporter object using your email service credentials
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // e.g., 'Gmail', 'Outlook', etc.
+      auth: {
+        user: 'smarttechhubinc@gmail.com',
+        pass: 'ryiqzfanjljtzyam',
+      },
+    });
+
+    const mailOptions = {
+      from: 'smarttechhubinc@gmail.com',
+      to: 'smarttechhubinc@gmail.com',
+      subject: 'Python Assignment Result Submission',
+      text: `Python Code:\n${pythonCode}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+
+    // Update the assignment completion status in the database if needed
+    const updateResult = await updateAssignmentCompletion(assignmentName, userId);
+
+    if (updateResult.success) {
+      // Assignment completion status updated successfully
+      console.log('Assignment completion status updated successfully');
+    } else {
+      // Handle errors if update fails
+      console.error('Failed to update assignment completion status');
+    }
+
+    res.status(200).json({ message: 'Python assignment result submitted successfully' });
+  } catch (error) {
+    console.error('Error submitting Python assignment result:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+
+
 
 // Server-side route to fetch grades for the user
 router.get('/grades', async (req, res) => {

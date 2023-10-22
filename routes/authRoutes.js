@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
     
         if (emailCheckResult.rows.length > 0) {
           // Email already exists, send a response to the frontend
-          return res.status(400).json({ error: 'Email already exists.' });
+          return res.status(400).json({ error: 'Email already exists! Check your mail for verification.' });
         }
 
 

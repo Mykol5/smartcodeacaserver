@@ -691,6 +691,51 @@ router.put('/submit-python-assignment-result', async (req, res) => {
 
 
 
+// Server-side route to fetch completed assignments
+router.get('/completed-assignments', async (req, res) => {
+  try {
+    // Check if there's a token in the request headers
+    const token = req.header('Authorization');
+
+    if (!token) {
+      return res.status(401).json({ error: 'No authentication token provided' });
+    }
+
+    // Remove 'Bearer ' prefix and verify the token using the secret key
+    const cleanedToken = token.split(' ')[1];
+    const decoded = jwt.verify(cleanedToken, secretKey);
+
+    // Check if the token is expired
+    const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
+    if (decoded.exp < currentTime) {
+      return res.status(401).json({ error: 'Token has expired' });
+    }
+
+    // Get the user's ID from the request, adjust this based on your authentication setup
+    const userId = decoded.user_id;
+    // Query the database to fetch completed assignments for the user
+    const query = {
+      text: `
+        SELECT assignment_name
+        FROM user_assignments
+        WHERE user_id = $1
+        AND completed = true
+        ORDER BY due_date DESC
+      `,
+      values: [userId],
+    };
+
+    const result = await pool.query(query);
+
+    // Send the completed assignments as a JSON response
+    res.status(200).json({ completedAssignments: result.rows });
+  } catch (error) {
+    console.error('Error fetching completed assignments:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 
 

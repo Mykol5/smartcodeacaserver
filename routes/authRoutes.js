@@ -716,16 +716,19 @@ router.get('/completed-assignments', async (req, res) => {
     // Query the database to fetch completed assignments for the user
     const query = {
       text: `
-        SELECT assignment_name
-        FROM user_assignments
-        WHERE user_id = $1
-        AND completed = true
-        ORDER BY due_date DESC
+          SELECT assignment_name, due_date
+          FROM user_assignments
+          WHERE user_id = $1
+          AND completed = true
+          ORDER BY due_date DESC
       `,
       values: [userId],
-    };
+  };  
 
     const result = await pool.query(query);
+
+           // Log the result to verify the data being fetched
+           console.log('Fetched completed assignments:', result.rows);
 
     // Send the completed assignments as a JSON response
     res.status(200).json({ completedAssignments: result.rows });
@@ -734,7 +737,6 @@ router.get('/completed-assignments', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 
 

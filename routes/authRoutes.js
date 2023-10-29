@@ -821,6 +821,73 @@ router.get('/notifications', async (req, res) => {
   }
 });
 
+
+
+
+// Define the route for processing feedback
+router.post('/process-feedback', (req, res) => {
+  try {
+    // Check if there's a token in the request headers
+    const token = req.header('Authorization');
+
+    if (!token) {
+      return res.status(401).json({ error: 'No authentication token provided' });
+    }
+
+    // Remove 'Bearer ' prefix and verify the token using the secret key
+    const cleanedToken = token.split(' ')[1];
+    const decoded = jwt.verify(cleanedToken, secretKey);
+
+    // Check if the token is expired
+    const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
+    if (decoded.exp < currentTime) {
+      return res.status(401).json({ error: 'Token has expired' });
+    }
+
+    // Extract the user's email from the decoded token
+    const userEmail = decoded.email;
+
+    // Now you have the user's email, and you can associate it with the feedback
+    const { assignmentFeedback, courseFeedback } = req.body;
+
+    // Create a Nodemailer transporter for sending feedback email
+    const feedbackTransporter = nodemailer.createTransport({
+      service: 'gmail', // e.g., 'Gmail' for Gmail
+      auth: {
+        user: 'smarttechhubinc@gmail.com', // Replace with your email
+        pass: 'ryiqzfanjljtzyam', // Replace with your email password or an app-specific password
+      },
+    });
+
+    // Define email content for feedback email
+    const feedbackMailOptions = {
+      from: 'smarttechhubinc@gmail.com',
+      to: 'smarttechhubinc@gmail.com', // Replace with your email address
+      subject: 'New Feedback Received',
+      text: `Assignment Feedback:\n${assignmentFeedback}\n\nCourse Feedback:\n${courseFeedback}`,
+    };
+
+    // Send the feedback email
+    feedbackTransporter.sendMail(feedbackMailOptions, (error, info) => {
+      if (error) {
+        console.log('Error sending feedback email: ' + error);
+        return res.status(500).json({ error: 'An error occurred while sending feedback.' });
+      }
+
+      console.log('Feedback email sent: ' + info.response);
+
+      // Respond to the original feedback request
+      res.status(200).json({ message: 'Feedback received and email sent.' });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred during feedback processing.' });
+  }
+});
+
+
+
+
 module.exports = router;
 
 

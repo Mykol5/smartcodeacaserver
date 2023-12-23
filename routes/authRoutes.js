@@ -869,6 +869,122 @@ router.put('/submit-lecture-screenshot', upload.single('screenshot'), async (req
 
 
 
+
+// Use the 'upload' middleware for the specific route
+router.put('/submit-assignment-screenshot', upload.single('screenshot'), async (req, res) => {
+  try {
+    // Extract the screenshot, lectureName, and userId from the request body
+    const { assignmentName } = req.body;
+    const screenshot = req.file; // Change this line    
+    console.log('Request Body:', req.body);
+    console.log('Received File:', req.file);
+
+
+    console.log('Received screenshot submission for assignment:', assignmentName);
+    console.log('Screenshot:', screenshot); // This will show information abou
+
+    // Check if there's a token in the request headers
+    const token = req.header('Authorization');
+
+    if (!token) {
+      console.error('No authentication token provided');
+      return res.status(401).json({ error: 'No authentication token provided' });
+    }
+
+    console.log('Authentication Token:', token);
+
+    // Remove 'Bearer ' prefix and verify the token using the secret key
+    const cleanedToken = token.split(' ')[1];
+    const decoded = jwt.verify(cleanedToken, secretKey);
+
+    // Check if the token is expired
+    const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
+    if (decoded.exp < currentTime) {
+      console.error('Token has expired');
+      return res.status(401).json({ error: 'Token has expired' });
+    }
+
+    console.log('Decoded Token:', decoded);
+
+    // Get the user's ID from the decoded token
+    const userId = decoded.user_id;
+
+    console.log('User ID:', userId);
+
+    // Check if the screenshot data is present
+    if (!screenshot || !screenshot.buffer) {
+      console.error('Screenshot data is missing');
+      return res.status(400).json({ error: 'Screenshot data is missing' });
+    }
+
+    // Convert the screenshot buffer to a Base64 string
+    const screenshotBase64 = screenshot.buffer.toString('base64');
+
+    // Check if the screenshot data is in a valid image format (e.g., PNG)
+    if (!isValidImageFormat(screenshot.buffer)) {
+      console.error('Invalid image format');
+      return res.status(400).json({ error: 'Invalid image format' });
+    }
+
+    console.log('Screenshot data is valid');
+
+        // Create a transporter object using your email service credentials
+        const transporter = nodemailer.createTransport({
+          service: 'gmail', // e.g., 'Gmail', 'Outlook', etc.
+          auth: {
+            user: 'smarttechhubinc@gmail.com',
+            pass: 'ryiqzfanjljtzyam',
+          },
+        });
+    
+
+    // Send the screenshot to the admin's email
+    const mailOptions = {
+      from: 'smarttechhubinc@gmail.com',
+      to: 'smarttechhubinc@gmail.com', // Admin's email address
+      subject: 'Assignment Screenshot Submission',
+      text: `Assignment Name: ${assignmentName}`,
+      attachments: [
+        {
+          filename: 'screenshot.jpg', // Change the filename if needed
+          content: screenshotBase64, // Use the screenshotBase64 string
+          encoding: 'base64', // Set the encoding to 'base64'
+        },
+      ],
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, async (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      } else {
+        // Here, after successfully sending the email, update the assignment completion status
+        const updateResult = await updateAssignmentCompletion(assignmentName, userId);
+
+        if (updateResult.success) {
+          // Assignment completion status updated successfully
+          console.log('Assignment completion status updated successfully');
+        } else {
+          // Handle errors if update fails
+          console.error('Failed to update assignment completion status');
+        }
+
+        console.log('Email sent:', info.response);
+        res.status(200).json({ message: 'Assignment screenshot submitted successfully' });
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting assignment screenshot:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+
+
+
 // Server-side route to fetch grades for the user
 router.get('/grades', async (req, res) => {
   try {
